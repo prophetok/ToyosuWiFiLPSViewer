@@ -1,10 +1,16 @@
-import { Stage, Layer, Image, Circle, Line, Text } from "react-konva";
-import { useState, useEffect, useRef } from "react";
-
+import { Stage, Layer, Image, Circle, Line, Text, Group } from "react-konva";
+import {
+  useState,
+  useEffect,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
+// import "konva/lib/shapes/div";
 const XMargin = 100;
 const YMargin = 200;
 
-const Map = () => {
+const Map = forwardRef((props, ref) => {
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth - XMargin,
     height: window.innerHeight - YMargin,
@@ -30,17 +36,7 @@ const Map = () => {
       setFloorImage(img);
       floorImageWidthRefer.current = img.width;
       floorImageHeightRefer.current = img.height;
-      const newTargetArray: Array<{ x: number; y: number; name: string }> = [];
-      for (let i = 1; i <= 5; i++) {
-        const x = Math.random() * 500;
-        const y = Math.random() * 500;
-        const name = `ターレ${i}号機`;
-        targetMap.current[name] = { x, y, name };
-        newTargetArray.push({ x, y, name });
-      }
-      setTargetArray(newTargetArray);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imagePath]);
   useEffect(() => {
     const ratioWidth = windowSize.width / floorImageWidthRefer.current;
@@ -49,6 +45,14 @@ const Map = () => {
     setFloorImageWidth(floorImageWidthRefer.current * scale);
     setFloorImageHeight(floorImageHeightRefer.current * scale);
     setFloorImageScale(scale);
+    const targetMapValues = Object.values(targetMap.current).map(
+      ({ x, y, name }) => ({
+        x: x * scale,
+        y: y * scale,
+        name,
+      })
+    );
+    setTargetArray(targetMapValues);
   }, [windowSize, floorImage]);
   useEffect(() => {
     const handleResize = () => {
@@ -63,15 +67,32 @@ const Map = () => {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+  useImperativeHandle(ref, () => ({
+    updatePosition({ x, y, name }: { x: number; y: number; name: string }) {
+      targetMap.current[name] = { x, y, name };
+      const targetMapValues = Object.values(targetMap.current).map(
+        ({ x, y, name }) => ({
+          x: x * floorImageScale,
+          y: y * floorImageScale,
+          name,
+        })
+      );
+      setTargetArray(targetMapValues);
+    },
+  }));
+  // ターレの位置をランダムに生成して表示する処理 debug用
   const onClick = () => {
-    // setImagePath("public/2nd.png");
     const newTargetArray: Array<{ x: number; y: number; name: string }> = [];
     for (let i = 1; i <= 5; i++) {
-      const x = Math.random() * 500;
-      const y = Math.random() * 500;
+      const x = Math.random() * floorImageWidthRefer.current;
+      const y = Math.random() * floorImageHeightRefer.current;
       const name = `ターレ${i}号機`;
       targetMap.current[name] = { x, y, name };
-      newTargetArray.push({ x, y, name });
+      newTargetArray.push({
+        x: x * floorImageScale,
+        y: y * floorImageScale,
+        name,
+      });
     }
     setTargetArray(newTargetArray);
   };
@@ -87,12 +108,10 @@ const Map = () => {
       </Layer>
       <Layer>
         {targetArray.map(({ x, y, name }) => (
-          <>
+          <Group key={name}>
             <Line
               points={[x, 0, x, floorImageHeight]}
               stroke="red"
-              alpha={0.5}
-              thickness={1}
               opacity={0.2}
             />
             <Line
@@ -122,11 +141,11 @@ const Map = () => {
                 (shape as Konva.Text)._sceneFunc(context);
               }}
             />
-          </>
+          </Group>
         ))}
       </Layer>
     </Stage>
   );
-};
+});
 
 export default Map;

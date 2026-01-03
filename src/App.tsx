@@ -10,7 +10,6 @@ import Map from "./components/Map";
 
 function App() {
   // ログインしているユーザーの情報を管理するステート
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [user, setUser] = useState(null);
   // モーダルの表示状態を管理するステート
   const [modals, setModals] = useState({ login: false, signUp: false });
@@ -49,11 +48,24 @@ function App() {
     // ログアウト後の処理を記述する（例：リダイレクトなど）
   };
 
+  const mapRef = React.useRef();
+  const navBarRef = React.useRef();
+  const onMenuClick = (command) => {
+    console.log("Menu clicked:", command);
+    // handleLogout();
+    // Example: Update map or perform actions when menu is clicked
+    if (mapRef.current) {
+      // Call methods on Map component via ref if needed
+      console.log("Map ref is available");
+      mapRef.current.updatePosition({ x: 100, y: 100, name: "ターレ1号機" });
+    }
+  };
+
   return (
     <div className="App">
       <div if={user}>
-        <TheNavbar />
-        <Map />
+        <TheNavbar ref={navBarRef} onMenuClick={onMenuClick} />
+        <Map ref={mapRef} />
       </div>
       <div className="container ">
         <div className="mt-5"></div>
