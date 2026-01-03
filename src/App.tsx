@@ -51,8 +51,10 @@ function App() {
 
   return (
     <div className="App">
-      <TheNavbar />
-      <Map />
+      <div if={user}>
+        <TheNavbar />
+        <Map />
+      </div>
       <div className="container ">
         <div className="mt-5"></div>
         {/* ログイン用モーダル */}

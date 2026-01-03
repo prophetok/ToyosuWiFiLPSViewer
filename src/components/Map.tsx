@@ -9,16 +9,20 @@ const Map = () => {
     width: window.innerWidth - XMargin,
     height: window.innerHeight - YMargin,
   });
+  const [targetArray, setTargetArray] = useState<
+    Array<{ x: number; y: number; name: string }>
+  >([]);
+  const targetMap = useRef(
+    {} as Map<string, { x: number; y: number; name: string }>
+  );
   const [floorImage, setFloorImage] = useState<HTMLImageElement | undefined>();
   const [floorImageWidth, setFloorImageWidth] = useState(0);
   const [floorImageHeight, setFloorImageHeight] = useState(0);
   const floorImageWidthRefer = useRef(0);
   const floorImageHeightRefer = useRef(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [imagePath, setImagePath] = useState("public/1st.png");
   const [floorImageScale, setFloorImageScale] = useState(1.0);
-  const [position, setPosition] = useState({ x: 200, y: 200 });
-  const [imagePosition, setImagePosition] = useState({ x: 200, y: 200 });
-  const [tooltipText, setTooltipText] = useState("ターレ1号機");
   useEffect(() => {
     const img = new window.Image();
     img.src = imagePath;
@@ -26,6 +30,15 @@ const Map = () => {
       setFloorImage(img);
       floorImageWidthRefer.current = img.width;
       floorImageHeightRefer.current = img.height;
+      const newTargetArray: Array<{ x: number; y: number; name: string }> = [];
+      for (let i = 1; i <= 5; i++) {
+        const x = Math.random() * 500;
+        const y = Math.random() * 500;
+        const name = `ターレ${i}号機`;
+        targetMap.current[name] = { x, y, name };
+        newTargetArray.push({ x, y, name });
+      }
+      setTargetArray(newTargetArray);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imagePath]);
@@ -50,16 +63,17 @@ const Map = () => {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
-  useEffect(() => {
-    setImagePosition({
-      x: position.x * 0.5 * floorImageScale,
-      y: position.y * 0.5 * floorImageScale,
-    });
-  }, [position, floorImageScale]);
   const onClick = () => {
-    setImagePath("public/2nd.png");
-    setPosition({ x: 100, y: 100 });
-    setTooltipText("ターレ2号機");
+    // setImagePath("public/2nd.png");
+    const newTargetArray: Array<{ x: number; y: number; name: string }> = [];
+    for (let i = 1; i <= 5; i++) {
+      const x = Math.random() * 500;
+      const y = Math.random() * 500;
+      const name = `ターレ${i}号機`;
+      targetMap.current[name] = { x, y, name };
+      newTargetArray.push({ x, y, name });
+    }
+    setTargetArray(newTargetArray);
   };
   return (
     <Stage width={windowSize.width} height={windowSize.height}>
@@ -72,31 +86,44 @@ const Map = () => {
         />
       </Layer>
       <Layer>
-        <Line
-          points={[imagePosition.x, 0, imagePosition.x, floorImageHeight]}
-          stroke="red"
-        />
-        <Line
-          points={[0, imagePosition.y, floorImageWidth, imagePosition.y]}
-          stroke="red"
-        />
-        <Circle
-          x={imagePosition.x}
-          y={imagePosition.y}
-          radius={5}
-          fill="blue"
-        />
-        <Text
-          x={imagePosition.x}
-          y={imagePosition.y}
-          text={tooltipText}
-          fontFamily="Calibri"
-          fontSize={12}
-          padding={5}
-          textFill="red"
-          fill="black"
-          // alpha={0.75}
-        />
+        {targetArray.map(({ x, y, name }) => (
+          <>
+            <Line
+              points={[x, 0, x, floorImageHeight]}
+              stroke="red"
+              alpha={0.5}
+              thickness={1}
+              opacity={0.2}
+            />
+            <Line
+              points={[0, y, floorImageWidth, y]}
+              stroke="red"
+              opacity={0.2}
+            />
+            <Circle x={x} y={y} radius={5} fill="blue" />
+            <Text
+              x={x}
+              y={y}
+              text={name}
+              fontFamily="Calibri"
+              fontSize={12}
+              padding={5}
+              textFill="red"
+              fill="black"
+              alpha={0.75}
+              sceneFunc={(context, shape) => {
+                context.fillStyle = "rgb(255,255,204)";
+                context.fillRect(
+                  0 + 5,
+                  0 + 5,
+                  shape.width() - 5,
+                  shape.height() - 5
+                );
+                (shape as Konva.Text)._sceneFunc(context);
+              }}
+            />
+          </>
+        ))}
       </Layer>
     </Stage>
   );
