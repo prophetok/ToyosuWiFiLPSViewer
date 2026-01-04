@@ -4,11 +4,16 @@ import LoginModal from "./components/LoginModal";
 import SignUpModal from "./components/SignUpModal";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./firebase";
+import { auth, app } from "./firebase";
 import TheNavbar from "./components/TheNavbar";
 import Map from "./components/Map";
+import { doc, getFirestore, onSnapshot } from "firebase/firestore";
 
 function App() {
+  const mapRef = React.useRef();
+  const navBarRef = React.useRef();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [unsubscribe, setUnsubscribe] = useState<() => void | null>(null);
   // ログインしているユーザーの情報を管理するステート
   const [user, setUser] = useState(null);
   // モーダルの表示状態を管理するステート
@@ -32,6 +37,21 @@ function App() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user);
+        const db = getFirestore(app);
+        const docRef = doc(db, "CurrentPosition", "turret1");
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const func = onSnapshot(docRef, (doc) => {
+          console.log("Current data: ", doc.data());
+          if (mapRef.current) {
+            const data = doc.data();
+            mapRef.current.updatePosition({
+              x: data.x,
+              y: data.y,
+              name: "ターレ1号機",
+            });
+          }
+        });
+        setUnsubscribe(() => func);
       } else {
         setUser(null);
         setModals({ login: true, signUp: false }); // ログインモーダルを表示
@@ -48,8 +68,6 @@ function App() {
     // ログアウト後の処理を記述する（例：リダイレクトなど）
   };
 
-  const mapRef = React.useRef();
-  const navBarRef = React.useRef();
   const onMenuClick = (command) => {
     console.log("Menu clicked:", command);
     // handleLogout();
